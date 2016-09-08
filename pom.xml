@@ -40,7 +40,6 @@
           </goals>
           <configuration>
             <args>
-              <arg>-make:transitive</arg>
               <arg>-dependencyfile</arg>
               <arg>${project.build.directory}/.scala_dependencies</arg>
             </args>
@@ -69,6 +68,12 @@
       <artifactId>maven-assembly-plugin</artifactId>
       <version>2.4.1</version>
       <configuration>
+          <archive>
+              <manifest>
+                  <addClasspath>true</addClasspath>
+                  <mainClass>com.github.samtebbs33.baldr.Baldr</mainClass>
+              </manifest>
+          </archive>
         <descriptorRefs>
           <descriptorRef>jar-with-dependencies</descriptorRef>
         </descriptorRefs>
