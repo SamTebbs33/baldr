@@ -146,10 +146,17 @@ object Baldr {
     else appendToFile(stagingFile, path)
   }
 
+  def removeLineFromFile(file: File, line: String): Unit = {
+    val lines = Files.readAllLines(file.toPath)
+    val writer = new PrintWriter(file)
+    lines.filter(!_.equals(line)).foreach(writer.println)
+    writer.close()
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     if(!args(0).equals("init") && !baldrDir.exists()) {
-      println("Not initialised, run \'baldr init\' to initialise a baldr repository here")
+      println("Not initialised, run 'baldr init' to initialise a baldr repository here")
       return
     }
     args(0) match {
@@ -161,6 +168,12 @@ object Baldr {
       case "ignore" => {
         ignoreFile.createNewFile()
         appendToFile(ignoreFile, args(1))
+      }
+      case "ack" => {
+        if(!ignoreFile.exists()) println("'" + ignoreFile + "' doesn't exist")
+        else {
+          removeLineFromFile(ignoreFile, args(1))
+        }
       }
     }
   }
