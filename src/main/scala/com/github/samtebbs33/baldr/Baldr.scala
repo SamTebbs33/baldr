@@ -46,15 +46,13 @@ object Baldr {
     }
   }
 
-  def appendToFile(file: File, s: String) = {
-    Files.write(file.toPath, s.getBytes, StandardOpenOption.APPEND)
-  }
+  def appendToFile(file: File, s: String) = Files.write(file.toPath, s.getBytes, StandardOpenOption.APPEND)
 
   def stagedFiles: Array[File] = Files.readAllLines(stagingFile.toPath).map(new File(_)).toArray
 
+  def clearStagingFile() = new FileOutputStream(stagingFile).close()
+
   def save(msg: String): Unit = {
-    val stagingFiles = getStagingFiles()
-    if(stagingFiles.isEmpty) println("No files staged")
     stagingFile.createNewFile()
     val files = stagedFiles
     if(files.isEmpty) println("No files staged")
@@ -74,6 +72,7 @@ object Baldr {
       })
       addFiles(files, "")
       zos.close()
+      clearStagingFile()
     }
   }
 
