@@ -5,8 +5,6 @@ import java.nio.file.{Files, StandardOpenOption}
 import java.util.Date
 import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
 
-import com.github.samtebbs33.baldr.Checksum
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -37,8 +35,7 @@ object Baldr {
 
   def createBranch(name: String): Unit = {
     branchesFile.createNewFile()
-    removeLineFromFile(branchesFile, currentBranch)
-    appendToFile(branchesFile, name)
+    updateFileLine(branchesFile, currentBranch, name)
     appendToFile(branchesFile, "\n" + name + "=" + head)
     println("Created branch " + name)
   }
@@ -70,9 +67,15 @@ object Baldr {
     case _ => ""
   }
 
+  def updateFileLine(file: File, line: String, newLine: String): Unit = {
+    val lines = Files.readAllLines(file.toPath)
+    val writer = new PrintWriter(file)
+    lines.foreach(l ⇒ writer.println(if(l.equals(line)) newLine else l))
+    writer.close()
+  }
+
   def updateBranchHead(branch: String, newHead: String, prevHead: String): Unit = {
-    removeLineFromFile(branchesFile, branch + "=" + prevHead)
-    appendToFile(branchesFile, "\n" + branch + "=" + newHead)
+    updateFileLine(branchesFile, branch + "=" + prevHead, branch + "=" + newHead)
   }
 
   def save(msg: String): Unit = {
