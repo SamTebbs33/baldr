@@ -170,6 +170,11 @@ object Baldr {
     writer.close()
   }
 
+  def unstage(path: String): Unit = {
+    stagingFile.createNewFile()
+    removeLineFromFile(stagingFile, path)
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     if(!args(0).equals("init") && !baldrDir.exists()) {
@@ -182,6 +187,7 @@ object Baldr {
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
       case "stage" => stage(args(1))
+      case "unstage" => unstage(args(1))
       case "ignore" => {
         ignoreFile.createNewFile()
         appendToFile(ignoreFile, args(1))
