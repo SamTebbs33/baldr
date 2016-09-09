@@ -26,14 +26,19 @@ object Baldr {
   val ignoreFile = new File(".baldr_ignore")
   val stagingFile = new File(baldrDir, "staging.txt")
   val ignoredFiles = if (ignoreFile.exists()) Files.readAllLines(ignoreFile.toPath).toArray else new Array[String](0)
-  val currentBranch = masterBranchName // TODO: Read from file
+  val currentBranch = readCurrentBranch()
+
+  def readCurrentBranch() = if(branchesFile.exists()) Files.readAllLines(branchesFile.toPath).find(!_.contains("=")).getOrElse(masterBranchName) else masterBranchName
+
   val baldrDirFilter = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = !name.equals(dirName)
   }
 
   def createBranch(name: String): Unit = {
     branchesFile.createNewFile()
-    appendToFile(branchesFile, name + "=" + head)
+    removeLineFromFile(branchesFile, currentBranch)
+    appendToFile(branchesFile, name)
+    appendToFile(branchesFile, "\n" + name + "=" + head)
     println("Created branch " + name)
   }
 
