@@ -27,6 +27,7 @@ object Baldr {
   val stagingFile = new File(baldrDir, "staging.txt")
   val ignoredFiles = if (ignoreFile.exists()) Files.readAllLines(ignoreFile.toPath).toArray else new Array[String](0)
   val currentBranch = readCurrentBranch()
+  val author = System.getProperty("user.name")
 
   def readCurrentBranch() = if(branchesFile.exists()) Files.readAllLines(branchesFile.toPath).find(!_.contains("=")).getOrElse(masterBranchName) else masterBranchName
 
@@ -87,6 +88,7 @@ object Baldr {
       metaFile.createNewFile()
       appendToFile(metaFile, "msg=" + msg)
       appendToFile(metaFile, "\nparent=" + currentHead)
+      appendToFile(metaFile, "\nauthor=" + author)
       updateBranchHead(currentBranch, hash.toString, currentHead)
       val zipFile = new File(savesDir, hash + ".zip")
       zipFile.createNewFile()
