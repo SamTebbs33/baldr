@@ -25,6 +25,7 @@ object Baldr {
   val savesDir = new File(baldrDir.getAbsolutePath, "saves")
   val ignoreFile = new File(".baldr_ignore")
   val stagingFile = new File(baldrDir, "staging.txt")
+  val ignoredFiles = if (ignoreFile.exists()) Files.readAllLines(ignoreFile.toPath).toArray else new Array[String](0)
   val baldrDirFilter = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = !name.equals(dirName)
   }
@@ -51,6 +52,8 @@ object Baldr {
   def stagedFiles: Array[File] = Files.readAllLines(stagingFile.toPath).map(new File(_)).toArray
 
   def clearStagingFile() = new FileOutputStream(stagingFile).close()
+
+  def fileIsIgnored(path: String) = ignoredFiles.exists(_.equals(path))
 
   def save(msg: String): Unit = {
     stagingFile.createNewFile()
@@ -138,14 +141,22 @@ object Baldr {
   def stage(path: String): Unit = {
     stagingFile.createNewFile()
     val file = new File(path)
-    if(!file.exists()) println("File does not exist")
+    if(fileIsIgnored(path)) println("File is ignored by '" + ignoreFile.getName + "'")
+    else if(!file.exists()) println("File does not exist")
     else appendToFile(stagingFile, path)
+  }
+
+  def removeLineFromFile(file: File, line: String): Unit = {
+    val lines = Files.readAllLines(file.toPath)
+    val writer = new PrintWriter(file)
+    lines.filter(!_.equals(line)).foreach(writer.println)
+    writer.close()
   }
 
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     if(!args(0).equals("init") && !baldrDir.exists()) {
-      println("Not initialised, run \'baldr init\' to initialise a baldr repository here")
+      println("Not initialised, run 'baldr init' to initialise a baldr repository here")
       return
     }
     args(0) match {
@@ -154,6 +165,16 @@ object Baldr {
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
       case "stage" => stage(args(1))
+      case "ignore" => {
+        ignoreFile.createNewFile()
+        appendToFile(ignoreFile, args(1))
+      }
+      case "ack" => {
+        if(!ignoreFile.exists()) println("'" + ignoreFile + "' doesn't exist")
+        else {
+          removeLineFromFile(ignoreFile, args(1))
+        }
+      }
     }
   }
 
