@@ -154,6 +154,10 @@ object Baldr {
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
       case "stage" => stage(args(1))
+      case "ignore" => {
+        ignoreFile.createNewFile()
+        appendToFile(ignoreFile, args(1))
+      }
     }
   }
 
