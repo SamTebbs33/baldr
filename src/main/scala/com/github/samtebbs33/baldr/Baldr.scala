@@ -9,6 +9,7 @@ import com.github.samtebbs33.baldr.Checksum
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 /**
   * Created by samtebbs on 08/09/2016.
@@ -23,6 +24,7 @@ object Baldr {
   val branchesFile = new File(baldrDir.getName, "branches.txt")
   val savesDir = new File(baldrDir.getAbsolutePath, "saves")
   val ignoreFile = new File(".baldr_ignore")
+  val stagingFile = new File(baldrDir, "staging.txt")
   val baldrDirFilter = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = !name.equals(dirName)
   }
@@ -48,23 +50,31 @@ object Baldr {
     Files.write(file.toPath, s.getBytes, StandardOpenOption.APPEND)
   }
 
+  def getStagingFiles(): Array[File] = {
+    stagingFile.createNewFile()
+    Files.readAllLines(stagingFile.toPath).map(new File(_)).toArray
+  }
+
   def save(msg: String): Unit = {
-    println(Checksum.getChecksum(root))
-    val date = new Date()
-    savesDir.mkdirs()
-    val hash = date.getTime()
-    val metaFile = new File(savesDir, hash + saveMetaExtension)
-    metaFile.createNewFile()
-    appendToFile(metaFile, "msg=" + msg)
-    val zipFile = new File(savesDir, hash + ".zip")
-    zipFile.createNewFile()
-    val zos = new ZipOutputStream(new FileOutputStream(zipFile))
-    def addFiles(list: Array[File], path: String): Unit = list.foreach(child ⇒ {
-      if(!child.isDirectory) writeFileToZip(zos, path, child)
-      else addFiles(child.listFiles(), path + File.separator + child.getName)
-    })
-    addFiles(root.listFiles(baldrDirFilter), "")
-    zos.close()
+    val stagingFiles = getStagingFiles()
+    if(stagingFiles.isEmpty) println("No files staged")
+    else {
+      val date = new Date()
+      savesDir.mkdirs()
+      val hash = date.getTime()
+      val metaFile = new File(savesDir, hash + saveMetaExtension)
+      metaFile.createNewFile()
+      appendToFile(metaFile, "msg=" + msg)
+      val zipFile = new File(savesDir, hash + ".zip")
+      zipFile.createNewFile()
+      val zos = new ZipOutputStream(new FileOutputStream(zipFile))
+      def addFiles(list: Array[File], path: String): Unit = list.foreach(child ⇒ {
+        if (!child.isDirectory) writeFileToZip(zos, path, child)
+        else addFiles(child.listFiles(), path + File.separator + child.getName)
+      })
+      addFiles(stagingFiles, "")
+      zos.close()
+    }
   }
 
   def delete(file: File): Unit = {
@@ -102,12 +112,12 @@ object Baldr {
   def revert(hash: String): Unit = {
     val saveFile = new File(savesDir.getAbsolutePath, hash + ".zip")
     if(saveFile.exists()) {
-      // Delete working dir
-      root.listFiles(baldrDirFilter).foreach(delete)
       // Extract save
       val zis = new ZipInputStream(new FileInputStream(saveFile))
       var entry = zis.getNextEntry
       while (entry != null) {
+        // Delete working directory copy
+        new File(entry.getName).delete()
         writeZipEntryToFile(entry, zis, root)
         entry = zis.getNextEntry
       }
@@ -126,13 +136,25 @@ object Baldr {
     })
   }
 
+  def stage(path: String): Unit = {
+    stagingFile.createNewFile()
+    val file = new File(path)
+    if(!file.exists()) println("File does not exist")
+    else appendToFile(stagingFile, path)
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
+    if(!args(0).equals("init") && !baldrDir.exists()) {
+      println("Not initialised, run \'baldr init\' to initialise a baldr repository here")
+      return
+    }
     args(0) match {
       case "init" ⇒ init()
       case "save" ⇒ save(args(1))
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
+      case "stage" => stage(args(1))
     }
   }
 
