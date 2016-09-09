@@ -26,13 +26,14 @@ object Baldr {
   val ignoreFile = new File(".baldr_ignore")
   val stagingFile = new File(baldrDir, "staging.txt")
   val ignoredFiles = if (ignoreFile.exists()) Files.readAllLines(ignoreFile.toPath).toArray else new Array[String](0)
+  val currentBranch = masterBranchName // TODO: Read from file
   val baldrDirFilter = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = !name.equals(dirName)
   }
 
   def createBranch(name: String): Unit = {
     branchesFile.createNewFile()
-    appendToFile(branchesFile, name)
+    appendToFile(branchesFile, name + "=" + head)
     println("Created branch " + name)
   }
 
@@ -55,17 +56,33 @@ object Baldr {
 
   def fileIsIgnored(path: String) = ignoredFiles.exists(_.equals(path))
 
+  def head = Files.readAllLines(branchesFile.toPath).find(_.startsWith(currentBranch + "=")) match {
+    case Some(line) => line.split("=") match {
+      case Array(_, hash) => hash
+      case _ => ""
+    }
+    case _ => ""
+  }
+
+  def updateBranchHead(branch: String, newHead: String, prevHead: String): Unit = {
+    removeLineFromFile(branchesFile, branch + "=" + prevHead)
+    appendToFile(branchesFile, "\n" + branch + "=" + newHead)
+  }
+
   def save(msg: String): Unit = {
     stagingFile.createNewFile()
     val files = stagedFiles
+    val currentHead = head
     if(files.isEmpty) println("No files staged")
     else {
       val date = new Date()
       savesDir.mkdirs()
-      val hash = date.getTime()
+      val hash = date.getTime
       val metaFile = new File(savesDir, hash + saveMetaExtension)
       metaFile.createNewFile()
       appendToFile(metaFile, "msg=" + msg)
+      appendToFile(metaFile, "\nparent=" + currentHead)
+      updateBranchHead(currentBranch, hash.toString, currentHead)
       val zipFile = new File(savesDir, hash + ".zip")
       zipFile.createNewFile()
       val zos = new ZipOutputStream(new FileOutputStream(zipFile))
@@ -171,9 +188,7 @@ object Baldr {
       }
       case "ack" => {
         if(!ignoreFile.exists()) println("'" + ignoreFile + "' doesn't exist")
-        else {
-          removeLineFromFile(ignoreFile, args(1))
-        }
+        else removeLineFromFile(ignoreFile, args(1))
       }
     }
   }
