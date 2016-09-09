@@ -50,14 +50,14 @@ object Baldr {
     Files.write(file.toPath, s.getBytes, StandardOpenOption.APPEND)
   }
 
-  def getStagingFiles(): Array[File] = {
-    stagingFile.createNewFile()
-    Files.readAllLines(stagingFile.toPath).map(new File(_)).toArray
-  }
+  def stagedFiles: Array[File] = Files.readAllLines(stagingFile.toPath).map(new File(_)).toArray
 
   def save(msg: String): Unit = {
     val stagingFiles = getStagingFiles()
     if(stagingFiles.isEmpty) println("No files staged")
+    stagingFile.createNewFile()
+    val files = stagedFiles
+    if(files.isEmpty) println("No files staged")
     else {
       val date = new Date()
       savesDir.mkdirs()
@@ -72,7 +72,7 @@ object Baldr {
         if (!child.isDirectory) writeFileToZip(zos, path, child)
         else addFiles(child.listFiles(), path + File.separator + child.getName)
       })
-      addFiles(stagingFiles, "")
+      addFiles(files, "")
       zos.close()
     }
   }
