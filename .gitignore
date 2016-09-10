@@ -19,4 +19,5 @@ project/plugins/project/
 .idea/
 baldr.iml
 out/
+*.jar
 test.txt
