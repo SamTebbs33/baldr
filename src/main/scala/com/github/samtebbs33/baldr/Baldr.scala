@@ -45,12 +45,13 @@ object Baldr {
     else {
       val date = new Date()
       Save.savesDir.mkdirs()
-      val hash = date.getTime
-      val save = new Save(hash.toString)
+      val hash = date.getTime.toString
+      val save = new Save(hash)
       save.addMetaAttribute("message", msg)
       save.addMetaAttribute("author", author)
       save.addMetaAttribute("parent", currentHead)
       save.write(files.toArray)
+      Branch.updateHead(hash)
       staging.clear()
     }
   }
@@ -78,7 +79,7 @@ object Baldr {
       val hash = file.getName.replaceAll("(?:\\.)(?:[0-9]|[a-z]|[A-Z])+", "")
       val date = new Date(hash.toLong)
       printf("%n* Date: %s, #%s%n", date.toString, hash)
-      Files.readAllLines(file.toPath).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + " = " + line(1)))
+      IO.readLines(file).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + ": " + line(1)))
     })
   }
 

@@ -10,15 +10,19 @@ import scala.collection.mutable
   */
 class Save(hash: String) {
 
+  val cacheInterval = 5
   val metaAttributes = new mutable.HashMap[String, String]()
 
   def addMetaAttribute(name: String, value: String) = metaAttributes.put(name, value)
 
   def write(files: Array[File]): Unit = {
+    if(Branch.current.savesSinceCache >= cacheInterval) {
+      Cache.buildCache(files, hash)
+      Branch.current.savesSinceCache = 0
+    } else Branch.current.savesSinceCache += 1
     val metaFile = new File(Save.savesDir, hash + Baldr.saveMetaExtension)
     metaFile.createNewFile()
     metaAttributes.foreach(pair ⇒ IO.appendToFile(metaFile, pair._1 + "=" + pair._2 + System.lineSeparator()))
-    Branch.current.head = hash.toString
     val zipFile = new File(Save.savesDir, hash + ".zip")
     zipFile.createNewFile()
     val zos = new ZipOutputStream(new FileOutputStream(zipFile))
@@ -31,6 +35,7 @@ class Save(hash: String) {
   }
 
 }
+
 object Save {
   val savesDir = new File(Baldr.baldrDir.getAbsolutePath, "saves")
 }
