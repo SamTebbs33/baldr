@@ -51,7 +51,7 @@ object Baldr {
       save.addMetaAttribute("author", author)
       save.addMetaAttribute("parent", currentHead)
       save.write(files.toArray)
-      Branch.updateHead(hash)
+      Branch.updateHead(newHead = hash)
       staging.clear()
     }
   }
