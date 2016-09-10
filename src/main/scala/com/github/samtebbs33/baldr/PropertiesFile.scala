@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 /**
   * Created by samtebbs on 10/09/2016.
   */
-case class PropertiesFile(file: File) {
+class PropertiesFile(file: File) {
 
   val properties = new mutable.HashMap[String, String]()
   if(file.exists()) IO.readLines(file).map(_.split("=")).filter(_.length > 0).map{

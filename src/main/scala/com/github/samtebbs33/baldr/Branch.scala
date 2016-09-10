@@ -26,7 +26,7 @@ class Branch(val name: String, var head: String, var savesSinceCache: Int = 0, v
 object Branch {
 
   val branchesDir = new File(Baldr.baldrDir, "branches")
-  val metaFile = PropertiesFile(new File(Baldr.baldrDir, "meta.txt"))
+  val metaFile = new PropertiesFile(new File(Baldr.baldrDir, "meta.txt"))
   var current: Branch = _
   val branches = new mutable.MutableList[Branch]()
 
@@ -48,7 +48,7 @@ object Branch {
   }
 
   def createBranch(name: String, head: String = head): Branch = {
-    val branch = new Branch(name, head, propertiesFile = PropertiesFile(new File(branchesDir, name + ".txt")))
+    val branch = new Branch(name, head, propertiesFile = new PropertiesFile(new File(branchesDir, name + ".txt")))
     Branch.branches += branch
     setCurrentBranch(branch)
     branch
@@ -58,7 +58,7 @@ object Branch {
     branchesDir.mkdir()
     val branchFiles = branchesDir.listFiles()
     // Load all branches
-    branchFiles.map(PropertiesFile).foreach(p ⇒ branches += new Branch(p("name"), p("head"), p("sinceCache", "0").toInt, p))
+    branchFiles.map(new PropertiesFile(_)).foreach(p ⇒ branches += new Branch(p("name"), p("head"), p("sinceCache", "0").toInt, p))
     // Load current branch
     val currentBranch = metaFile("branch")
     current = branches.find(_.name.equals(currentBranch)).get
