@@ -4,19 +4,19 @@ import java.io.{File, FileOutputStream}
 import java.util.zip.ZipOutputStream
 
 import scala.collection.mutable
+import scala.collection.JavaConversions._
 
 /**
   * Created by samtebbs on 09/09/2016.
   */
-class Save(hash: String) {
+class Save(val hash: String) {
 
-  val cacheInterval = 5
   val metaAttributes = new mutable.HashMap[String, String]()
 
   def addMetaAttribute(name: String, value: String) = metaAttributes.put(name, value)
 
   def write(files: Array[File]): Unit = {
-    if(Branch.current.savesSinceCache >= cacheInterval) {
+    if(Branch.current.savesSinceCache >= Save.cacheInterval) {
       Cache.buildCache(files, hash)
       Branch.current.savesSinceCache = 0
     } else Branch.current.savesSinceCache += 1
@@ -38,4 +38,35 @@ class Save(hash: String) {
 
 object Save {
   val savesDir = new File(Baldr.baldrDir.getAbsolutePath, "saves")
+  val cacheInterval = 5
+
+  def load(hash: String): Save = {
+    val save = new Save(hash)
+    val saveFile = new File(savesDir, hash + ".txt")
+    val properties = new PropertiesFile(saveFile)
+    save.addMetaAttribute("parent", properties("parent"))
+    save.addMetaAttribute("author", properties("author"))
+    save.addMetaAttribute("message", properties("message"))
+    save
+  }
+
+  def changeList(hash: String): mutable.Map[File, mutable.MutableList[(Boolean, Int, String)]] = {
+    val dir = new File(savesDir, hash)
+    val map = new mutable.HashMap[File, mutable.MutableList[(Boolean, Int, String)]]()
+    val indexFile = new File(dir, "index.txt")
+    IO.readLines(indexFile).map(_.split("=")).foreach {
+      case Array(path, num) ⇒ {
+        val fileChanges = new mutable.MutableList[(Boolean, Int, String)]
+        val file = new File(dir, num + ".txt")
+        IO.readLines(file).map(_.split(":")).foreach {
+          case changeType :: (changeLine :: changeData) ⇒
+            val tuple = (changeType.equals("+"), changeLine.toString.toInt, changeData.mkString(":"))
+            fileChanges += tuple
+        }
+        map.put(new File(path), fileChanges)
+      }
+    }
+    map
+  }
+
 }
