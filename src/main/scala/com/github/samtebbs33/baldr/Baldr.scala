@@ -57,7 +57,17 @@ object Baldr {
   }
 
   def revert(hash: String): Unit = {
-    val saveFile = new File(Save.savesDir.getAbsolutePath, hash + ".zip")
+    // Go through each save from head to target, reversing changes made in each
+    val save = Save.load(Branch.head)
+    val fileContentMap = new mutable.HashMap[File, mutable.MutableList[String]]()
+    // TODO: Create file change list from save
+    while(!save.hash.equals(hash)) {
+      // Modify file content list with changes from save
+      // Load head
+    }
+
+
+/*    val saveFile = new File(Save.savesDir.getAbsolutePath, hash + ".zip")
     if(saveFile.exists()) {
       // Extract save
       val zis = new ZipInputStream(new FileInputStream(saveFile))
@@ -69,7 +79,7 @@ object Baldr {
         entry = zis.getNextEntry
       }
       zis.close()
-    } else println("Save doesn't exist")
+    } else println("Save doesn't exist")*/
   }
 
   def listSaves(): Unit = {
