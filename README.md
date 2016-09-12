@@ -13,6 +13,9 @@ Add a file to the staging list.
 baldr stage path/to/file
 ```
 
+## unstage
+Remove a file from the staging list
+
 ### save
 Saves the state of all staged files
 
@@ -21,7 +24,7 @@ baldr save "message"
 ```
 
 ### revert
-Revert a save's files to how they were in the save
+Revert the working directory to the specified save
 
 ```
 baldr revert "save_hash"

@@ -43,7 +43,7 @@ object Cache {
       val fileCacheObjectDir = new File(cacheObjectDir, file.toString)
       fileCacheObjectDir.mkdirs()
       // Create the file that will stored the cached contents
-      val checksum = Checksum.getChecksum(file).asInt().toString
+      val checksum = Checksum.getChecksum(file)
       val fileCacheObjectFile = new File(fileCacheObjectDir, checksum)
       if(!fileCacheObjectFile.exists()) {
         fileCacheObjectFile.createNewFile()
