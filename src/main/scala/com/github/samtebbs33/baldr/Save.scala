@@ -37,6 +37,31 @@ class Save(val hash: String) {
 }
 
 object Save {
+
+  type ContentList = scala.collection.mutable.MutableList[(File, mutable.MutableList[String])]
+  type DiffList = mutable.MutableList[(Boolean, Int, String)]
+
+  def getStateAtSave(hash: String): ContentList = {
+    // Go through each save from head to target, reversing changes made in each
+    val save = Save.load(hash)
+    // Go through parents until cache is found, adding saves to saveStack on the way
+    val saveStack = new mutable.Stack[String]()
+    val contentList = findCache(save)
+    def findCache(save: Save): ContentList = {
+      Cache.get(save.hash) match {
+        case Some(cache) => cache
+        case _ => saveStack.push(save.hash)
+          save.parent match {
+            case "" => new ContentList
+            case parent => findCache(Save.load(parent))
+          }
+      }
+    }
+    // Apply changes from each save
+    saveStack.foreach(hash => Save.applyChanges(hash, contentList))
+    contentList
+  }
+
   val savesDir = new File(Baldr.baldrDir.getAbsolutePath, "saves")
   val cacheInterval = 5
 
@@ -52,14 +77,14 @@ object Save {
 
   def changeList(hash: String): mutable.Map[File, mutable.MutableList[(Boolean, Int, String)]] = {
     val dir = new File(savesDir, hash)
-    val map = new mutable.HashMap[File, mutable.MutableList[(Boolean, Int, String)]]()
+    val map = new mutable.HashMap[File, DiffList]()
     val indexFile = new File(dir, "index.txt")
     IO.readLines(indexFile).map(_.split("=")).foreach {
       case Array(path, num) ⇒ {
-        val fileChanges = new mutable.MutableList[(Boolean, Int, String)]
+        val fileChanges = new DiffList
         val file = new File(dir, num + ".txt")
         IO.readLines(file).map(_.split(":")).foreach {
-          case changeType :: (changeLine :: changeData) ⇒
+          case Array(changeType, changeLine, changeData@_*) ⇒
             val tuple = (changeType.equals("+"), changeLine.toString.toInt, changeData.mkString(":"))
             fileChanges += tuple
         }
