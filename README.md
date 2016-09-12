@@ -2,6 +2,10 @@
 
 A small experimental version control system.
 
+## Download
+
+Download from the [releases page](https://github.com/SamTebbs33/baldr/releases).
+
 ## Usage
 
 Replace below usages of `baldr` command with `java -jar baldr.jar`
