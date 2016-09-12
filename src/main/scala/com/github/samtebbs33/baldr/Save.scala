@@ -25,13 +25,13 @@ class Save(val hash: String) {
       Branch.current.savesSinceCache = 0
     } else Branch.current.savesSinceCache += 1
     val saveDir = new File(Save.savesDir, hash)
+    saveDir.mkdirs()
     val metaFile = new File(saveDir, "meta.txt")
     metaFile.createNewFile()
     metaAttributes.foreach(pair ⇒ IO.appendToFile(metaFile, pair._1 + "=" + pair._2 + System.lineSeparator()))
     // Get state at last save
     val state = Save.getStateAtSave(Branch.head)
     var fileCounter = 0
-    saveDir.mkdirs()
     // Index file stores bindings between file paths and IDs
     val indexFile = new File(saveDir, "index.txt")
     indexFile.createNewFile()
@@ -192,7 +192,8 @@ object Save {
 
   def load(hash: String): Save = {
     val save = new Save(hash)
-    val saveFile = new File(savesDir, hash + ".txt")
+    val saveDir = new File(savesDir, hash)
+    val saveFile = new File(savesDir, "meta.txt")
     val properties = new PropertiesFile(saveFile)
     save.addMetaAttribute("parent", properties.get("parent"))
     save.addMetaAttribute("author", properties.get("author"))
