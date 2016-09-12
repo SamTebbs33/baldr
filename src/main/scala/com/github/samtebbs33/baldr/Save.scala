@@ -24,28 +24,33 @@ class Save(val hash: String) {
       Cache.buildCache(files, hash)
       Branch.current.savesSinceCache = 0
     } else Branch.current.savesSinceCache += 1
-    val metaFile = new File(Save.savesDir, hash + Baldr.saveMetaExtension)
+    val saveDir = new File(Save.savesDir, hash)
+    val metaFile = new File(saveDir, "meta.txt")
     metaFile.createNewFile()
     metaAttributes.foreach(pair ⇒ IO.appendToFile(metaFile, pair._1 + "=" + pair._2 + System.lineSeparator()))
-    // Add diff list for each file
+    // Get state at last save
     val state = Save.getStateAtSave(Branch.head)
     var fileCounter = 0
-    val saveDir = new File(Save.savesDir, hash)
     saveDir.mkdirs()
+    // Index file stores bindings between file paths and IDs
     val indexFile = new File(saveDir, "index.txt")
     indexFile.createNewFile()
+    // Add diff list for each file
     def addFiles(list: Array[File], path: String): Unit = list.foreach(child ⇒ {
       if (!child.isDirectory) {
-        val oldLines = state.find(_._1.equals(child)) match {
-          case Some((_, lines)) => lines.toList
-          case _ => List[String]()
-        }
+        // Get lines from file in its last state
+        val oldLines = state.getOrElseUpdate(child, new mutable.MutableList[String]()).toList
+        // Get lines from file in working directory
         val newLines = IO.readLines(child).toList
+        // Get changes between version in last save and version in working dir
         val changes = Save.diff(oldLines, newLines)
+        // If there were changes
         if(changes.nonEmpty) {
+          // Add file to index
           IO.appendToFile(indexFile, path + child.getName + "=" + fileCounter + "\n")
           val changeFile = new File(saveDir, fileCounter + ".txt")
           changeFile.createNewFile()
+          // Print changes to file
           changes.foreach {
             case (addition, line, data) =>
               val changeStr = (if(addition) "+" else "-") + ":" + line + ":" + data
