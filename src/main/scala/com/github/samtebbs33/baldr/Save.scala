@@ -5,6 +5,7 @@ import java.util.zip.ZipOutputStream
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
+import scala.collection.immutable
 
 /**
   * Created by samtebbs on 09/09/2016.
@@ -13,6 +14,9 @@ class Save(val hash: String) {
 
   val metaAttributes = new mutable.HashMap[String, String]()
 
+  def parent = metaAttributes("parent")
+  def author = metaAttributes("author")
+  def message = metaAttributes("message")
   def addMetaAttribute(name: String, value: String) = metaAttributes.put(name, value)
 
   def write(files: Array[File]): Unit = {
