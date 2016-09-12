@@ -14,10 +14,10 @@ import scala.collection.JavaConverters._
 class Branch(val name: String, var head: String, var savesSinceCache: Int = 0, val propertiesFile: PropertiesFile) {
   println(name)
 
-  def write(): Unit ={
-    propertiesFile("name", name)
-    propertiesFile("head", head)
-    propertiesFile("sinceCache", savesSinceCache.toString)
+  def write(): Unit = {
+    propertiesFile.set("name", name)
+    propertiesFile.set("head", head)
+    propertiesFile.set("sinceCache", savesSinceCache.toString)
     propertiesFile.write()
   }
 
@@ -44,7 +44,7 @@ object Branch {
 
   def setCurrentBranch(branch: Branch) = {
     current = branch
-    metaFile("branch", current.name)
+    metaFile.set("branch", current.name)
   }
 
   def createBranch(name: String, head: String = head): Branch = {
@@ -58,9 +58,9 @@ object Branch {
     branchesDir.mkdir()
     val branchFiles = branchesDir.listFiles()
     // Load all branches
-    branchFiles.map(new PropertiesFile(_)).foreach(p ⇒ branches += new Branch(p("name"), p("head"), p("sinceCache", "0").toInt, p))
+    branchFiles.map(new PropertiesFile(_)).foreach(p ⇒ branches += new Branch(p.get("name"), p.get("head"), p.update("sinceCache", "0").toInt, p))
     // Load current branch
-    val currentBranch = metaFile("branch")
+    val currentBranch = metaFile.get("branch")
     current = branches.find(_.name.equals(currentBranch)).get
   }
 

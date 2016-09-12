@@ -11,6 +11,7 @@ import scala.collection.JavaConversions._
 class PropertiesFile(file: File) {
 
   val properties = new mutable.HashMap[String, String]()
+
   if(file.exists()) IO.readLines(file).map(_.split("=")).filter(_.length > 0).map{
     case Array(name, value) ⇒ (name, value)
     case Array(name) ⇒ (name, "")
@@ -21,7 +22,8 @@ class PropertiesFile(file: File) {
     IO.writeLines(file, properties.map(pair ⇒ pair._1 + "=" + pair._2).toList)
   }
 
-  def apply(key: String): String = properties(key)
-  def apply(key: String, default: String): String = properties.getOrElseUpdate(key, default)
+  def get(key: String): String = properties(key)
+  def set(key: String, value: String) = properties.put(key, value)
+  def update(key: String, default: String) = properties.getOrElseUpdate(key, default)
 
 }
