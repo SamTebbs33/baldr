@@ -3,6 +3,9 @@ package com.github.samtebbs33.baldr
 import java.io.{File, FileOutputStream}
 import java.nio.file.Files
 
+import scala.collection.JavaConversions._
+import scala.collection.mutable
+
 /**
   * Created by samtebbs on 10/09/2016.
   */
@@ -11,6 +14,23 @@ object Cache {
   val cacheDir = new File(Baldr.baldrDir, "cache")
   val cacheObjectDir = new File(cacheDir, "objects")
   val cacheSaveDir = new File(cacheDir ,"saves")
+
+  def get(hash: String): Option[scala.collection.mutable.MutableList[(File, mutable.MutableList[String])]] = {
+    val cacheFile = new File(cacheSaveDir, hash + ".txt")
+    if(cacheFile.exists()) {
+      val list = new mutable.MutableList[(File, mutable.MutableList[String])]()
+      IO.readLines(cacheFile).filter(_.nonEmpty).map(line => line.splitAt(line.lastIndexOf(File.separatorChar)))
+        .map(pair => (pair._1, pair._2.substring(1)))
+        .foreach(pair => {
+          val filePath = pair._1
+          val checksum = pair._2
+          val contentFile = new File(new File(cacheObjectDir, filePath), checksum)
+          val contentPair = (new File(filePath), scala.collection.mutable.MutableList(IO.readLines(contentFile):_*))
+          list += contentPair
+        })
+      Some(list)
+    } else None
+  }
 
   def buildCache(files: Array[File], hash: String): Unit = {
     cacheObjectDir.mkdirs()
