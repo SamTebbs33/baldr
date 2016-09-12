@@ -66,6 +66,42 @@ object Save {
     contentList
   }
 
+  def applyChanges(hash: String, contentList: ContentList): Unit = {
+    val changes = changeList(hash)
+    val ordering = new Ordering[(Int, Int)] {
+      override def compare(x: (Int, Int), y: (Int, Int)): Int = x._1.compareTo(y._1)
+    }
+    val offsetSet = new mutable.TreeSet[(Int, Int)]()(ordering)
+    def getLineOffset(line: Int) = offsetSet.takeWhile(_._1 <= line).map(_._1).sum
+    // Apply changes
+    changes.foreach {
+      case (file, list) =>
+        offsetSet.clear()
+        list.foreach {
+          case (addition, line, data) =>
+            val offsetChange = if(addition) 1 else -1
+            // Get list for file from contentList, else add it
+            val content = contentList.find(_._1.equals(file)) match {
+              case Some(list) => list._2
+              case _ =>
+                val list = new mutable.MutableList[String]()
+                val pair = (file, list)
+                contentList += pair
+                list
+            }
+            // Update file contents
+            val lineWithOffset = getLineOffset(line)
+            if(addition) content.add(lineWithOffset, data)
+            else content.remove(lineWithOffset)
+            // Update offset set with offset created by this change
+            offsetSet.find(_._1 == line) match {
+              case Some((l, off)) => offsetSet.add((l, off + offsetChange))
+              case None => offsetSet.add((line, offsetChange))
+            }
+        }
+    }
+  }
+
   val savesDir = new File(Baldr.baldrDir.getAbsolutePath, "saves")
   val cacheInterval = 5
 
