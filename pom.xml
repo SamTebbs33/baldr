@@ -15,14 +15,6 @@
   <scala.version>2.11.7</scala.version>
 </properties>
 
-<!-- repository to add org.apache.spark -->
-<repositories>
-  <repository>
-    <id>cloudera-repo-releases</id>
-    <url>https://repository.cloudera.com/artifactory/repo/</url>
-  </repository>
-</repositories>
-
 <build>
   <sourceDirectory>src/main/scala</sourceDirectory>
   <testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -98,11 +90,5 @@
     <artifactId>scala-library</artifactId>
     <version>${scala.version}</version>
   </dependency>
-  <dependency>
-    <groupId>org.apache.spark</groupId>
-    <artifactId>spark-core_2.10</artifactId>
-    <version>1.2.0-cdh5.3.1</version>
-  </dependency>
-
 </dependencies>
 </project>
