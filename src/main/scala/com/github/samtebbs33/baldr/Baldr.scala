@@ -57,29 +57,13 @@ object Baldr {
   }
 
   def revert(hash: String): Unit = {
-    // Go through each save from head to target, reversing changes made in each
-    val save = Save.load(Branch.head)
-    val fileContentMap = new mutable.HashMap[File, mutable.MutableList[String]]()
-    // TODO: Create file change list from save
-    while(!save.hash.equals(hash)) {
-      // Modify file content list with changes from save
-      // Load head
+    val contentList = Save.getStateAtSave(hash)
+    // Delete working directory and replace with versions from save
+    root.listFiles(baldrDirFilter).foreach(IO.delete)
+    // Write contentList to files
+    contentList.foreach {
+      case (file, lines) => if(lines.nonEmpty) IO.writeLines(file, lines.toList)
     }
-
-
-/*    val saveFile = new File(Save.savesDir.getAbsolutePath, hash + ".zip")
-    if(saveFile.exists()) {
-      // Extract save
-      val zis = new ZipInputStream(new FileInputStream(saveFile))
-      var entry = zis.getNextEntry
-      while (entry != null) {
-        // Delete working directory copy
-        new File(entry.getName).delete()
-        IO.writeZipEntryToFile(entry, zis, root)
-        entry = zis.getNextEntry
-      }
-      zis.close()
-    } else println("Save doesn't exist")*/
   }
 
   def listSaves(): Unit = {
