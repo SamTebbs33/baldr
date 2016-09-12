@@ -45,30 +45,25 @@ object Baldr {
     else {
       val date = new Date()
       Save.savesDir.mkdirs()
-      val hash = date.getTime
-      val save = new Save(hash.toString)
+      val hash = date.getTime.toString
+      val save = new Save(hash)
       save.addMetaAttribute("message", msg)
       save.addMetaAttribute("author", author)
       save.addMetaAttribute("parent", currentHead)
       save.write(files.toArray)
+      Branch.updateHead(newHead = hash)
       staging.clear()
     }
   }
 
   def revert(hash: String): Unit = {
-    val saveFile = new File(Save.savesDir.getAbsolutePath, hash + ".zip")
-    if(saveFile.exists()) {
-      // Extract save
-      val zis = new ZipInputStream(new FileInputStream(saveFile))
-      var entry = zis.getNextEntry
-      while (entry != null) {
-        // Delete working directory copy
-        new File(entry.getName).delete()
-        IO.writeZipEntryToFile(entry, zis, root)
-        entry = zis.getNextEntry
-      }
-      zis.close()
-    } else println("Save doesn't exist")
+    val contentList = Save.getStateAtSave(hash)
+    // Delete working directory and replace with versions from save
+    root.listFiles(baldrDirFilter).foreach(IO.delete)
+    // Write contentList to files
+    contentList.foreach {
+      case (file, lines) => if(lines.nonEmpty) IO.writeLines(file, lines.toList)
+    }
   }
 
   def listSaves(): Unit = {
@@ -78,7 +73,7 @@ object Baldr {
       val hash = file.getName.replaceAll("(?:\\.)(?:[0-9]|[a-z]|[A-Z])+", "")
       val date = new Date(hash.toLong)
       printf("%n* Date: %s, #%s%n", date.toString, hash)
-      Files.readAllLines(file.toPath).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + " = " + line(1)))
+      IO.readLines(file).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + ": " + line(1)))
     })
   }
 

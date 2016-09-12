@@ -2,6 +2,7 @@ package com.github.samtebbs33.baldr
 
 import java.io.File
 import java.nio.file.Files
+import java.util.Properties
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -10,18 +11,26 @@ import scala.collection.JavaConverters._
 /**
   * Created by samtebbs on 09/09/2016.
   */
-class Branch(val name: String, var head: String)
+class Branch(val name: String, var head: String, var savesSinceCache: Int = 0, val propertiesFile: PropertiesFile) {
+  println(name)
+
+  def write(): Unit = {
+    propertiesFile.set("name", name)
+    propertiesFile.set("head", head)
+    propertiesFile.set("sinceCache", savesSinceCache.toString)
+    propertiesFile.write()
+  }
+
+}
 
 object Branch {
 
-  val branchesFile = new File(Baldr.baldrDir.getName, "branches.txt")
+  val branchesDir = new File(Baldr.baldrDir, "branches")
+  val metaFile = new PropertiesFile(new File(Baldr.baldrDir, "meta.txt"))
   var current: Branch = _
   val branches = new mutable.MutableList[Branch]()
 
-  def updateHead(branch: String, newHead: String): Unit = branches.find(_.name.equals(branch)) match {
-    case Some(b) ⇒ b.head = newHead
-    case _ ⇒
-  }
+  def updateHead(branch: Branch = current, newHead: String): Unit = branch.head = newHead
 
   def head = current match {
     case null ⇒ ""
@@ -29,29 +38,30 @@ object Branch {
   }
 
   def writeChanges(): Unit = {
-    IO.writeLines(branchesFile, List(current.name), branches.toList.map(b ⇒ b.name + "=" + b.head))
+    branches.foreach(_.write())
+    metaFile.write()
+  }
+
+  def setCurrentBranch(branch: Branch) = {
+    current = branch
+    metaFile.set("branch", current.name)
   }
 
   def createBranch(name: String, head: String = head): Branch = {
-    val branch = new Branch(name, head)
+    val branch = new Branch(name, head, propertiesFile = new PropertiesFile(new File(branchesDir, name + ".txt")))
     Branch.branches += branch
+    setCurrentBranch(branch)
     branch
   }
 
   def loadBranches(): Unit = {
-    branchesFile.createNewFile()
-    val lines = Files.readAllLines(branchesFile.toPath)
+    branchesDir.mkdir()
+    val branchFiles = branchesDir.listFiles()
     // Load all branches
-    lines.filter(_.contains("=")).map(_.split("=")).foreach{
-      case Array(name, hash) ⇒ branches += new Branch(name, hash)
-      case Array(name) ⇒ branches += new Branch(name, "")
-      case _ ⇒
-    }
+    branchFiles.map(new PropertiesFile(_)).foreach(p ⇒ branches += new Branch(p.get("name"), p.get("head"), p.update("sinceCache", "0").toInt, p))
     // Load current branch
-    lines.find(!_.contains("=")) match {
-      case Some(line) ⇒ current = branches.find(_.name.equals(line)).get
-      case _ ⇒
-    }
+    val currentBranch = metaFile.get("branch")
+    current = branches.find(_.name.equals(currentBranch)).get
   }
 
 }

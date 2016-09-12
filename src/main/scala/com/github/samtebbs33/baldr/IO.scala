@@ -12,6 +12,7 @@ import scala.collection.JavaConverters._
 object IO {
 
   def writeLines(file: File, lines: List[String]*): Unit = {
+    file.createNewFile()
     val writer = new PrintWriter(file)
     lines.foreach(_.foreach(writer.println))
     writer.close()
