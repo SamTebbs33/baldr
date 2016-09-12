@@ -3,6 +3,9 @@
 A small experimental version control system.
 
 ## Usage
+
+Replace below usages of `baldr` command with `java -jar baldr.jar`
+
 ### init
 Initialises an empty baldr repository in the current directory.
 
