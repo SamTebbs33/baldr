@@ -8,10 +8,14 @@ Download from the [releases page](https://github.com/SamTebbs33/baldr/releases).
 
 ## Usage
 
-Replace below usages of `baldr` command with `java -jar baldr.jar`
+Replace below usages of the `baldr` command with `java -jar baldr.jar`
 
 ### init
 Initialises an empty baldr repository in the current directory.
+
+```
+baldr init
+```
 
 ### stage
 Add a file to the staging list.
