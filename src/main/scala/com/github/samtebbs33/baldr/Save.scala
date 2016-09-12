@@ -3,9 +3,9 @@ package com.github.samtebbs33.baldr
 import java.io.{File, FileOutputStream}
 import java.util.zip.ZipOutputStream
 
-import scala.collection.mutable
+import scala.collection.{immutable, mutable}
 import scala.collection.JavaConversions._
-import scala.collection.immutable
+import scala.collection.JavaConverters._
 
 /**
   * Created by samtebbs on 09/09/2016.
@@ -27,44 +27,43 @@ class Save(val hash: String) {
     val metaFile = new File(Save.savesDir, hash + Baldr.saveMetaExtension)
     metaFile.createNewFile()
     metaAttributes.foreach(pair ⇒ IO.appendToFile(metaFile, pair._1 + "=" + pair._2 + System.lineSeparator()))
-    val zipFile = new File(Save.savesDir, hash + ".zip")
-    zipFile.createNewFile()
-    val zos = new ZipOutputStream(new FileOutputStream(zipFile))
+    // Add diff list for each file
+    val state = Save.getStateAtSave(Branch.head)
+    var fileCounter = 0
+    val saveDir = new File(Save.savesDir, hash)
+    saveDir.mkdirs()
+    val indexFile = new File(saveDir, "index.txt")
+    indexFile.createNewFile()
     def addFiles(list: Array[File], path: String): Unit = list.foreach(child ⇒ {
-      if (!child.isDirectory) IO.writeFileToZip(zos, path, child)
-      else addFiles(child.listFiles(), path + File.separator + child.getName)
+      if (!child.isDirectory) {
+        val oldLines = state.find(_._1.equals(child)) match {
+          case Some((_, lines)) => lines.toList
+          case _ => List[String]()
+        }
+        val newLines = IO.readLines(child).toList
+        val changes = Save.diff(oldLines, newLines)
+        if(changes.nonEmpty) {
+          IO.appendToFile(indexFile, path + child.getName + "=" + fileCounter + "\n")
+          val changeFile = new File(saveDir, fileCounter + ".txt")
+          changeFile.createNewFile()
+          changes.foreach {
+            case (addition, line, data) =>
+              val changeStr = (if(addition) "+" else "-") + ":" + line + ":" + data
+              IO.appendToFile(changeFile, changeStr + "\n")
+          }
+          fileCounter += 1
+        }
+      } else addFiles(child.listFiles(), path + File.separator + child.getName)
     })
     addFiles(files, "")
-    zos.close()
   }
 
 }
 
 object Save {
 
-  type ContentList = scala.collection.mutable.MutableList[(File, mutable.MutableList[String])]
+  type ContentMap = scala.collection.mutable.HashMap[File, mutable.MutableList[String]]
   type DiffList = mutable.MutableList[(Boolean, Int, String)]
-
-  def getStateAtSave(hash: String): ContentList = {
-    // Go through each save from head to target, reversing changes made in each
-    val save = Save.load(hash)
-    // Go through parents until cache is found, adding saves to saveStack on the way
-    val saveStack = new mutable.Stack[String]()
-    val contentList = findCache(save)
-    def findCache(save: Save): ContentList = {
-      Cache.get(save.hash) match {
-        case Some(cache) => cache
-        case _ => saveStack.push(save.hash)
-          save.parent match {
-            case "" => new ContentList
-            case parent => findCache(Save.load(parent))
-          }
-      }
-    }
-    // Apply changes from each save
-    saveStack.foreach(hash => Save.applyChanges(hash, contentList))
-    contentList
-  }
 
   def diff(oldLines: List[String], newLines: List[String]): DiffList = {
     val diffList = new mutable.MutableList[(Boolean, Int, String)]()
@@ -124,13 +123,38 @@ object Save {
     diffList
   }
 
-  def applyChanges(hash: String, contentList: ContentList): Unit = {
+  def getStateAtSave(hash: String): ContentMap = {
+    if(hash.isEmpty) return new ContentMap
+    // Go through each save from head to target, reversing changes made in each
+    val save = Save.load(hash)
+    // Go through parents until cache is found, adding saves to saveStack on the way
+    val saveStack = new mutable.Stack[String]()
+    def findCache(save: Save): ContentMap = {
+      Cache.get(save.hash) match {
+        case Some(cache) => cache
+        case _ => saveStack.push(save.hash)
+          save.parent match {
+            case "" => new ContentMap
+            case parent => findCache(Save.load(parent))
+          }
+      }
+    }
+    val contentList = findCache(save)
+    // Apply changes from each save
+    saveStack.foreach(hash => {
+      Save.applyChanges(hash, contentList)
+      println(s"content list after applying all changes: $contentList")
+    })
+    contentList
+  }
+
+  def applyChanges(hash: String, contentList: ContentMap): Unit = {
     val changes = changeList(hash)
     val ordering = new Ordering[(Int, Int)] {
       override def compare(x: (Int, Int), y: (Int, Int)): Int = x._1.compareTo(y._1)
     }
     val offsetSet = new mutable.TreeSet[(Int, Int)]()(ordering)
-    def getLineOffset(line: Int) = offsetSet.takeWhile(_._1 <= line).map(_._1).sum
+    def getLineOffset(line: Int) = offsetSet.takeWhile(_._1 < line).map(_._1).sum + line
     // Apply changes
     changes.foreach {
       case (file, list) =>
@@ -139,18 +163,16 @@ object Save {
           case (addition, line, data) =>
             val offsetChange = if(addition) 1 else -1
             // Get list for file from contentList, else add it
-            val content = contentList.find(_._1.equals(file)) match {
-              case Some(list) => list._2
-              case _ =>
-                val list = new mutable.MutableList[String]()
-                val pair = (file, list)
-                contentList += pair
-                list
+            var content = contentList.getOrElseUpdate(file, new mutable.MutableList[String]())
+            def insert(idx: Int, line: String): Unit = {
+              val pair = content.splitAt(idx) // split it at the appropriate index into two lists.
+              content = pair._1 ++ mutable.MutableList(line) ++ pair._2
             }
             // Update file contents
             val lineWithOffset = getLineOffset(line)
-            if(addition) content.add(lineWithOffset, data)
+            if(addition) insert(lineWithOffset, data)
             else content.remove(lineWithOffset)
+            contentList.put(file, content)
             // Update offset set with offset created by this change
             offsetSet.find(_._1 == line) match {
               case Some((l, off)) => offsetSet.add((l, off + offsetChange))
@@ -167,9 +189,9 @@ object Save {
     val save = new Save(hash)
     val saveFile = new File(savesDir, hash + ".txt")
     val properties = new PropertiesFile(saveFile)
-    save.addMetaAttribute("parent", properties("parent"))
-    save.addMetaAttribute("author", properties("author"))
-    save.addMetaAttribute("message", properties("message"))
+    save.addMetaAttribute("parent", properties.get("parent"))
+    save.addMetaAttribute("author", properties.get("author"))
+    save.addMetaAttribute("message", properties.get("message"))
     save
   }
 
