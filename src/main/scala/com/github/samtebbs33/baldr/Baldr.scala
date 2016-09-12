@@ -67,13 +67,12 @@ object Baldr {
   }
 
   def listSaves(): Unit = {
-    Save.savesDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = name.endsWith(saveMetaExtension)
-    }).foreach(file ⇒ {
-      val hash = file.getName.replaceAll("(?:\\.)(?:[0-9]|[a-z]|[A-Z])+", "")
+    Save.savesDir.listFiles().foreach(dir ⇒ {
+      val metaFile = new File(dir, "meta.txt")
+      val hash = dir.getName
       val date = new Date(hash.toLong)
       printf("%n* Date: %s, #%s%n", date.toString, hash)
-      IO.readLines(file).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + ": " + line(1)))
+      IO.readLines(metaFile).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + ": " + line(1)))
     })
   }
 
