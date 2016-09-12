@@ -66,6 +66,64 @@ object Save {
     contentList
   }
 
+  def diff(oldLines: List[String], newLines: List[String]): DiffList = {
+    val diffList = new mutable.MutableList[(Boolean, Int, String)]()
+    def aux(oldIdx: Int, newIdx: Int): Unit = {
+      var addition = false
+      var changeStr = ""
+      var changeLine = 0
+      var n = newIdx
+      var o = oldIdx
+      // Set the type of change that occured on the line
+      def setChangeType(a: Boolean): Unit = {
+        changeLine = if(a) n else o
+        changeStr = if(a) newLines(changeLine) else oldLines(changeLine)
+        addition = a
+      }
+      // If we've run over both lists then just return
+      if(o >= oldLines.size && newIdx >= newLines.size) return
+      // If no more lines exist in the old list but more exist in the new list, then set type as an addition
+      else if(o >= oldLines.size) {
+        setChangeType(true)
+        n += 1
+      }
+      // If no more lines exist in the new list but more exist in the old list, then set type as a deletion
+      else if(n >= newLines.size) {
+        setChangeType(false)
+        o += 1
+      } else {
+        val oldLine = oldLines(o)
+        val newLine = newLines(n)
+        // If the new line and old line are not equal
+        if(!oldLine.equals(newLine)) {
+          // Find out if old line exists further down in the new line list. Optimise by caching strings and the lines they appear on before hand
+          newLines.zipWithIndex.takeRight(newLines.size - n - 1).exists(_._1.equals(oldLine)) match {
+            // If it does then the new line was added, rather than the old line being deleted
+            case true =>
+              setChangeType(true)
+              n += 1
+            // If it doesn't then the old line was deleted, rather than the new line being added
+            case false =>
+              setChangeType(false)
+              o += 1
+          }
+        } else {
+          // If both are equal then ignore this line and skip ahead
+          aux(o + 1, n + 1)
+          return
+        }
+      }
+      // Add the change to the diff list
+      val change = (addition, changeLine, changeStr)
+      diffList += change
+      // Recurse over the rest of the line lists
+      aux(o, n)
+    }
+    // Start from beginning of both lists
+    aux(0, 0)
+    diffList
+  }
+
   def applyChanges(hash: String, contentList: ContentList): Unit = {
     val changes = changeList(hash)
     val ordering = new Ordering[(Int, Int)] {
