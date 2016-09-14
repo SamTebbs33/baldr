@@ -2,7 +2,7 @@ package com.github.samtebbs33.baldr
 
 import java.io.File
 
-import com.github.samtebbs33.baldr.Save.DiffList
+import com.github.samtebbs33.baldr.Save.{ContentMap, DiffList}
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -64,6 +64,40 @@ class ChangeDump(dir: File) {
       }
     }
     map
+  }
+
+  def applyChanges(contentList: ContentMap): Unit = {
+    val changes = changeList()
+    val ordering = new Ordering[(Int, Int)] {
+      override def compare(x: (Int, Int), y: (Int, Int)): Int = x._1.compareTo(y._1)
+    }
+    val offsetSet = new mutable.TreeSet[(Int, Int)]()(ordering)
+    def getLineOffset(line: Int) = offsetSet.takeWhile(_._1 < line).map(_._1).sum + line
+    // Apply changes
+    changes.foreach {
+      case (file, list) =>
+        offsetSet.clear()
+        list.foreach {
+          case (addition, line, data) =>
+            val offsetChange = if(addition) 1 else -1
+            // Get list for file from contentList, else add it
+            var content = contentList.getOrElseUpdate(file, new mutable.MutableList[String]())
+            def insert(idx: Int, line: String): Unit = {
+              val pair = content.splitAt(idx) // split it at the appropriate index into two lists.
+              content = pair._1 ++ mutable.MutableList(line) ++ pair._2
+            }
+            // Update file contents
+            val lineWithOffset = getLineOffset(line)
+            if(addition) insert(lineWithOffset, data)
+            else content.remove(lineWithOffset)
+            contentList.put(file, content)
+            // Update offset set with offset created by this change
+            offsetSet.find(_._1 == line) match {
+              case Some((l, off)) => offsetSet.add((l, off + offsetChange))
+              case None => offsetSet.add((line, offsetChange))
+            }
+        }
+    }
   }
 
 }
