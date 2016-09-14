@@ -100,7 +100,6 @@ object Save {
 
   def getStateAtSave(hash: String): ContentMap = {
     if(hash.isEmpty) return new ContentMap
-    // Go through each save from head to target, reversing changes made in each
     val save = Save.load(hash)
     // Go through parents until cache is found, adding saves to saveStack on the way
     val saveStack = new mutable.Stack[String]()
@@ -118,7 +117,6 @@ object Save {
     // Apply changes from each save
     saveStack.foreach(hash => {
       Save.applyChanges(hash, contentList)
-      println(s"content list after applying all changes: $contentList")
     })
     contentList
   }
@@ -173,21 +171,8 @@ object Save {
 
   def changeList(hash: String): mutable.Map[File, mutable.MutableList[(Boolean, Int, String)]] = {
     val dir = new File(savesDir, hash)
-    val map = new mutable.HashMap[File, DiffList]()
-    val indexFile = new File(dir, "index.txt")
-    IO.readLines(indexFile).map(_.split("=")).foreach {
-      case Array(path, num) ⇒ {
-        val fileChanges = new DiffList
-        val file = new File(dir, num + ".txt")
-        IO.readLines(file).map(_.split(":")).foreach {
-          case Array(changeType, changeLine, changeData@_*) ⇒
-            val tuple = (changeType.equals("+"), changeLine.toString.toInt, changeData.mkString(":"))
-            fileChanges += tuple
-        }
-        map.put(new File(path), fileChanges)
-      }
-    }
-    map
+    val changeDump = new ChangeDump(dir)
+    changeDump.changeList()
   }
 
 }

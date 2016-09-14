@@ -2,15 +2,18 @@ package com.github.samtebbs33.baldr
 
 import java.io.File
 
+import com.github.samtebbs33.baldr.Save.DiffList
+
 import scala.collection.mutable
 import scala.collection.JavaConversions._
+import scala.collection.mutable.MutableList
 
 /**
   * Created by samtebbs on 14/09/2016.
   */
-class ChangeDump(dir: File, files: Array[File]) {
+class ChangeDump(dir: File) {
 
-  def write(): Unit = {
+  def write(files: Array[File]): Unit = {
     // Get state at last save
     val state = Save.getStateAtSave(Branch.head)
     var fileCounter = 0
@@ -43,6 +46,24 @@ class ChangeDump(dir: File, files: Array[File]) {
       } else addFiles(child.listFiles(), path + File.separator + child.getName)
     })
     addFiles(files, "")
+  }
+
+  def changeList(): mutable.HashMap[File, DiffList] = {
+    val map = new mutable.HashMap[File, DiffList]()
+    val indexFile = new File(dir, "index.txt")
+    IO.readLines(indexFile).map(_.split("=")).foreach {
+      case Array(path, num) ⇒ {
+        val fileChanges = new DiffList
+        val file = new File(dir, num + ".txt")
+        IO.readLines(file).map(_.split(":")).foreach {
+          case Array(changeType, changeLine, changeData@_*) ⇒
+            val tuple = (changeType.equals("+"), changeLine.toString.toInt, changeData.mkString(":"))
+            fileChanges += tuple
+        }
+        map.put(new File(path), fileChanges)
+      }
+    }
+    map
   }
 
 }
