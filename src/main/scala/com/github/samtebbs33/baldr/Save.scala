@@ -24,13 +24,13 @@ class Save(val hash: String) {
       Cache.buildCache(files, hash)
       Branch.current.savesSinceCache = 0
     } else Branch.current.savesSinceCache += 1
-    val saveDir = new File(Save.savesDir, hash)
+    val saveDir = Save.getSaveDir(hash)
     saveDir.mkdirs()
     val metaFile = new File(saveDir, "meta.txt")
     metaFile.createNewFile()
     metaAttributes.foreach(pair ⇒ IO.appendToFile(metaFile, pair._1 + "=" + pair._2 + System.lineSeparator()))
-    val changeDump = new ChangeDump(saveDir, files)
-    changeDump.write()
+    val changeDump = new ChangeDump(saveDir)
+    changeDump.write(files)
   }
 
 }
@@ -121,16 +121,17 @@ object Save {
     contentList
   }
 
-  def applyChanges(hash: String, contentList: ContentMap): Unit = {
-    new ChangeDump(new File(savesDir, hash)).applyChanges(contentList)
-  }
+  def getSaveDir(hash: String) = new File(savesDir, hash)
+
+  def getChangeDump(hash: String) = new ChangeDump(getSaveDir(hash))
+
+  def applyChanges(hash: String, contentList: ContentMap): Unit = getChangeDump(hash).applyChanges(contentList)
 
   val savesDir = new File(Baldr.baldrDir.getAbsolutePath, "saves")
   val cacheInterval = 5
 
   def load(hash: String): Save = {
     val save = new Save(hash)
-    val saveDir = new File(savesDir, hash)
     val saveFile = new File(savesDir, "meta.txt")
     val properties = new PropertiesFile(saveFile)
     save.addMetaAttribute("parent", properties.get("parent"))
@@ -139,10 +140,6 @@ object Save {
     save
   }
 
-  def changeList(hash: String): mutable.Map[File, mutable.MutableList[(Boolean, Int, String)]] = {
-    val dir = new File(savesDir, hash)
-    val changeDump = new ChangeDump(dir)
-    changeDump.changeList()
-  }
+  def changeList(hash: String): mutable.Map[File, mutable.MutableList[(Boolean, Int, String)]] = getChangeDump(hash).changeList()
 
 }
