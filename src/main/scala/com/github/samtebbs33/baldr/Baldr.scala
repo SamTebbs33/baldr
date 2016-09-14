@@ -83,6 +83,11 @@ object Baldr {
     else staging.add(path)
   }
 
+  def stash(): Unit = {
+    Stash.loadStashes()
+    val stsh = new Stash()
+    stsh.write(staging.list.toArray)
+  }
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     val cmd = args(0)
@@ -95,6 +100,7 @@ object Baldr {
     Branch.loadBranches()
     cmd match {
       case "init" ⇒
+      case "stash" ⇒ stash()
       case "save" ⇒ save(args(1))
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
