@@ -1,22 +1,30 @@
 package com.github.samtebbs33.baldr
 
 import java.io.{File, FileOutputStream}
+import java.util.Date
 import java.util.zip.ZipOutputStream
 
 import scala.collection.{immutable, mutable}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 /**
   * Created by samtebbs on 09/09/2016.
   */
-class Save(val hash: String) {
+class Save(val hash: String, val message: String, val author: String, val date: Date, val parent: String) {
+
+  def this(hash: String, pFile: PropertiesFile) = {
+    this(hash, pFile.get("message"), pFile.get("author"), new Date(pFile.get("date").toLong), pFile.get("parent"))
+  }
 
   val metaAttributes = new mutable.HashMap[String, String]()
 
-  def parent = metaAttributes("parent")
-  def author = metaAttributes("author")
-  def message = metaAttributes("message")
+  addMetaAttribute("message", message)
+  addMetaAttribute("author", author)
+  addMetaAttribute("date", date.getTime.toString)
+  addMetaAttribute("parent", parent)
+
   def addMetaAttribute(name: String, value: String) = metaAttributes.put(name, value)
 
   def write(files: Array[File]): Unit = {
@@ -67,8 +75,12 @@ class Save(val hash: String) {
 
 object Save {
 
+  val saveHashSeparator = '-'
+
   type ContentMap = scala.collection.mutable.HashMap[File, mutable.MutableList[String]]
   type DiffList = mutable.MutableList[(Boolean, Int, String)]
+
+  def randHash(alphabet: String = "0123456789abcdef", length: Int = 4) = Stream.continually(Random.nextInt(alphabet.size)).map(alphabet).take(length).mkString
 
   def diff(oldLines: List[String], newLines: List[String]): DiffList = {
     val diffList = new mutable.MutableList[(Boolean, Int, String)]()
@@ -191,13 +203,10 @@ object Save {
   val cacheInterval = 5
 
   def load(hash: String): Save = {
-    val save = new Save(hash)
     val saveDir = new File(savesDir, hash)
     val saveFile = new File(savesDir, "meta.txt")
     val properties = new PropertiesFile(saveFile)
-    save.addMetaAttribute("parent", properties.get("parent"))
-    save.addMetaAttribute("author", properties.get("author"))
-    save.addMetaAttribute("message", properties.get("message"))
+    val save = new Save(hash, properties)
     save
   }
 

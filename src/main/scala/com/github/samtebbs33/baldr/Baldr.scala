@@ -45,11 +45,8 @@ object Baldr {
     else {
       val date = new Date()
       Save.savesDir.mkdirs()
-      val hash = date.getTime.toString
-      val save = new Save(hash)
-      save.addMetaAttribute("message", msg)
-      save.addMetaAttribute("author", author)
-      save.addMetaAttribute("parent", currentHead)
+      val hash = Save.randHash()
+      val save = new Save(hash, msg, author, date, currentHead)
       save.write(files.toArray)
       Branch.updateHead(newHead = hash)
       staging.clear()
@@ -68,11 +65,9 @@ object Baldr {
 
   def listSaves(): Unit = {
     Save.savesDir.listFiles().foreach(dir ⇒ {
-      val metaFile = new File(dir, "meta.txt")
-      val hash = dir.getName
-      val date = new Date(hash.toLong)
-      printf("%n* Date: %s, #%s%n", date.toString, hash)
-      IO.readLines(metaFile).map(_.split("=")).filter(_.length > 1).foreach(line ⇒ println(line(0) + ": " + line(1)))
+      val save = new Save(dir.getName, new PropertiesFile(new File(dir, "meta.txt")))
+      printf("%n* Date: %s, #%s%n", save.date, save.hash)
+      Map("message" -> save.message, "author" -> save.author).foreach(pair ⇒ println(s"${pair._1}: ${pair._2}"))
     })
   }
 
