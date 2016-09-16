@@ -3,13 +3,27 @@ package com.github.samtebbs33.baldr
 import java.io.{File, FileInputStream, FileOutputStream, PrintWriter}
 import java.nio.file.{Files, StandardOpenOption}
 import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
+
+import com.github.samtebbs33.baldr.Save.ContentMap
+
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 /**
   * Created by samtebbs on 09/09/2016.
   */
 object IO {
+  def contentMap(file: File): Option[ContentMap] = file.exists() match {
+    case true =>
+      val mList = new mutable.MutableList[String]()
+      mList.addAll(0, readLines(file))
+      val map = new mutable.HashMap[File, mutable.MutableList[String]]()
+      map.put(file, mList)
+      Some(map)
+    case _ => None
+  }
+
 
   def writeLines(file: File, lines: List[String]*): Unit = {
     file.createNewFile()

@@ -60,8 +60,8 @@ class Save(val hash: String, val message: String, val author: String, val date: 
           changeFile.createNewFile()
           // Print changes to file
           changes.foreach {
-            case (addition, line, data) =>
-              val changeStr = (if(addition) "+" else "-") + ":" + line + ":" + data
+            case change =>
+              val changeStr = Save.changetoStr(change)
               IO.appendToFile(changeFile, changeStr + "\n")
           }
           fileCounter += 1
@@ -74,6 +74,7 @@ class Save(val hash: String, val message: String, val author: String, val date: 
 }
 
 object Save {
+  def changetoStr(change: (Boolean, Int, String)) = (if(change._1) "+" else "-") + ":" + change._2 + ":" + change._3
 
   val saveHashSeparator = '-'
 
@@ -81,6 +82,16 @@ object Save {
   type DiffList = mutable.MutableList[(Boolean, Int, String)]
 
   def randHash(alphabet: String = "0123456789abcdef", length: Int = 4) = Stream.continually(Random.nextInt(alphabet.size)).map(alphabet).take(length).mkString
+
+  def isSaveHash(str: String) = parseHash(str).isDefined
+
+  def saveExists(hash: String) = new File(savesDir, hash).exists()
+
+  def parseHash(arg1: String) = arg1 match {
+    case "HEAD" => Some(Branch.head)
+    case _ if saveExists(arg1) => Some(arg1)
+    case _ => None
+  }
 
   def diff(oldLines: List[String], newLines: List[String]): DiffList = {
     val diffList = new mutable.MutableList[(Boolean, Int, String)]()

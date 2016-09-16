@@ -78,6 +78,28 @@ object Baldr {
     else staging.add(path)
   }
 
+  def diff(arg1: String, arg2: String): Unit = {
+    def getContentMap(str: String) = Save.parseHash(arg1) match {
+      case Some(hash) => Some(Save.getStateAtSave(hash))
+      case None => IO.contentMap(new File(str))
+    }
+    val arg1Content = getContentMap(arg1)
+    val arg2Content = getContentMap(arg2)
+    (arg1Content, arg2Content) match {
+      case (x, y) if x.isEmpty || y.isEmpty => println("Invalid argument/s")
+      case (Some(content1), Some(content2)) =>
+        val intersection = content1.filter(content2.contains(_)).map(pair => (pair._1, (pair._2, content2(pair._1))))
+        val diffs = intersection.map {
+          case (file, (lines1, lines2)) => (file, Save.diff(lines1.toList, lines2.toList))
+        }
+        diffs.foreach{
+          case (file, diff) =>
+            println(s"%n-> ${file.toString}")
+            diff.foreach(change => println(Save.changetoStr(change)))
+        }
+    }
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     val cmd = args(0)
@@ -97,6 +119,7 @@ object Baldr {
       case "unstage" => staging.remove(args(1))
       case "ignore" => ignore.add(args(1))
       case "ack" => ignore.remove(args(1))
+      case "diff" => diff(args(1), args(2))
     }
     ignore.writeChanges()
     staging.writeChanges()
