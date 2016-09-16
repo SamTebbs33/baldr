@@ -88,6 +88,12 @@ object Baldr {
     val stsh = new Stash()
     stsh.write(staging.list.toArray)
   }
+
+  def popStash(): Unit = {
+    Stash.loadStashes()
+    Stash.pop()
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     val cmd = args(0)
@@ -100,7 +106,9 @@ object Baldr {
     Branch.loadBranches()
     cmd match {
       case "init" ⇒
-      case "stash" ⇒ stash()
+      case "stash" ⇒ if(args.length == 1) stash() else args(1) match {
+        case "pop" ⇒ popStash()
+      }
       case "save" ⇒ save(args(1))
       case "revert" ⇒ revert(args(1))
       case "list" ⇒ listSaves()
