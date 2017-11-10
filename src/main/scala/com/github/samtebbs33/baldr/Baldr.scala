@@ -38,6 +38,10 @@ object Baldr {
     }
   }
 
+  def unstage(filePath: String): Unit = {
+    staging.remove(filePath)
+  }
+
   def save(msg: String): Unit = {
     val files = staging.list
     val currentHead = Branch.head
