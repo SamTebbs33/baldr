@@ -17,6 +17,7 @@ object Baldr {
   val root = new File(".")
   val author = System.getProperty("user.name")
   val staging = new FileList(new File(baldrDir, "staging.txt"))
+  val tracking = new FileList(new File(baldrDir, "tracking.txt"))
   val ignore = new FileList(new File(".baldr_ignore"))
 
   val baldrDirFilter = new FilenameFilter {
@@ -45,6 +46,14 @@ object Baldr {
         }
         case None => println(s"The file '$filePath' was not tracked at this save")
       }
+  }
+
+  def track(filePath: String): Unit = {
+    tracking.add(filePath)
+  }
+
+  def untrack(filePath: String): Unit = {
+    tracking.remove(filePath);
   }
 
   def unstage(filePath: String): Unit = {
@@ -101,9 +110,9 @@ object Baldr {
   def revert(hash: String): Unit = {
     val contentList = Save.getStateAtSave(hash)
     // Delete working directory and replace with versions from save
-    root.listFiles(baldrDirFilter).foreach(IO.delete)
-    // Write contentList to files
-    contentList.foreach {
+    tracking.list.foreach(IO.delete)
+    // Write contentList to tracked files
+    contentList.filter(p => tracking.list.contains(p._1)).foreach {
       case (file, lines) => if(lines.nonEmpty) IO.writeLines(file, lines.toList)
     }
   }
@@ -120,12 +129,16 @@ object Baldr {
     val file = new File(path)
     if(ignore.has(path)) println("File is ignored")
     else if(!file.exists()) println("File does not exist")
-    else staging.add(path)
+    else {
+      track(path)
+      staging.add(path)
+    }
   }
 
   def writeChanges(): Unit = {
     ignore.writeChanges()
     staging.writeChanges()
+    tracking.writeChanges()
     Branch.writeChanges()
   }
 
@@ -138,6 +151,7 @@ object Baldr {
     } else if(cmd.equals("init")) init()
     ignore.createFileAndLoad()
     staging.createFileAndLoad()
+    tracking.createFileAndLoad()
     Branch.loadBranches()
     Command.accept(args(0), args.slice(1, args.length))
     writeChanges()
