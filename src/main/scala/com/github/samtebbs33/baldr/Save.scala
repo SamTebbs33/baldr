@@ -204,7 +204,8 @@ object Save {
 
   def load(hash: String): Save = {
     val saveDir = new File(savesDir, hash)
-    val saveFile = new File(savesDir, "meta.txt")
+    val saveFile = new File(saveDir, "meta.txt")
+    println(s"Save file ${saveFile.getAbsolutePath}")
     val properties = new PropertiesFile(saveFile)
     val save = new Save(hash, properties)
     save
