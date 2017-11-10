@@ -17,6 +17,7 @@ object Baldr {
   val root = new File(".")
   val author = System.getProperty("user.name")
   val staging = new FileList(new File(baldrDir, "staging.txt"))
+  val tracking = new FileList(new File(baldrDir, "tracking.txt"))
   val ignore = new FileList(new File(".baldr_ignore"))
 
   val baldrDirFilter = new FilenameFilter {
@@ -45,6 +46,14 @@ object Baldr {
         }
         case None => println(s"The file '$filePath' was not tracked at this save")
       }
+  }
+
+  def track(filePath: String): Unit = {
+    tracking.add(filePath)
+  }
+
+  def untrack(filePath: String): Unit = {
+    tracking.remove(filePath);
   }
 
   def unstage(filePath: String): Unit = {
