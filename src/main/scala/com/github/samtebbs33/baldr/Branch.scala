@@ -37,6 +37,13 @@ object Branch {
     case x ⇒ x.head
   }
 
+  def getBranch(branchName: String) = branches.find(b => b.name.equals(branchName))
+
+  def branchExists(branchName: String) = getBranch(branchName) match {
+    case Some(_) => true
+    case None => false
+  }
+
   def writeChanges(): Unit = {
     branches.foreach(_.write())
     metaFile.write()
