@@ -78,6 +78,12 @@ object Baldr {
     else staging.add(path)
   }
 
+  def writeChanges(): Unit = {
+    ignore.writeChanges()
+    staging.writeChanges()
+    Branch.writeChanges()
+  }
+
   def main(args: Array[String]): Unit = {
     if(args.length == 0) return
     val cmd = args(0)
