@@ -55,7 +55,12 @@ object Baldr {
   }
 
   def repl(args: Array[String]): Unit = {
-    while(StdIn.readLine() match {
+    def prompt(): String = {
+      print("> ")
+      StdIn.readLine()
+    }
+
+    while(prompt() match {
       case null => false
       case input =>
         val split = splitArgs(input)
