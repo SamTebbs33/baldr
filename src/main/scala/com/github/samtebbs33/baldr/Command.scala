@@ -8,7 +8,7 @@ object Command {
     "repl" -> new Command(0, a => Baldr.repl(a)),
     "init" -> new Command(0, _ => ()),
     "save" -> new Command(1, a => Baldr.save(a(0))),
-    "ls" -> new Command(0, void),
+    "ls" -> new Command(0, _ => Baldr.listSaves()),
     "revert" -> new Command(1, a => Baldr.revert(a(0))),
     "add" -> new Command(1, a => Baldr.stage(a(0))),
     "rm" -> new Command(1, a => Baldr.unstage(a(0))),
