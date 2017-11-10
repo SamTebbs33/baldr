@@ -1,13 +1,9 @@
 package com.github.samtebbs33.baldr
 
 import java.io._
-import java.nio.file.{Files, StandardOpenOption}
 import java.util.Date
-import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
 
-import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
-import scala.collection.mutable
+import scala.io.StdIn
 
 /**
   * Created by samtebbs on 08/09/2016.
