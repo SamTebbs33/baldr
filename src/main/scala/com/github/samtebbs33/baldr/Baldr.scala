@@ -129,12 +129,16 @@ object Baldr {
     val file = new File(path)
     if(ignore.has(path)) println("File is ignored")
     else if(!file.exists()) println("File does not exist")
-    else staging.add(path)
+    else {
+      track(path)
+      staging.add(path)
+    }
   }
 
   def writeChanges(): Unit = {
     ignore.writeChanges()
     staging.writeChanges()
+    tracking.writeChanges()
     Branch.writeChanges()
   }
 
