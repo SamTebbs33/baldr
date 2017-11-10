@@ -34,6 +34,19 @@ object Baldr {
     }
   }
 
+  def resetFile(filePath: String, hash: String): Unit = {
+      val file = new File(filePath)
+      // TODO Really terrible and inefficient. Maybe only load relevant file state, not the state of the whole save, in future?
+      val content = Save.getStateAtSave(hash)
+      content.get(file) match {
+        case Some(lines) => {
+          IO.delete(file)
+          IO.writeLines(file, lines.toList)
+        }
+        case None => println(s"The file '$filePath' was not tracked at this save")
+      }
+  }
+
   def unstage(filePath: String): Unit = {
     staging.remove(filePath)
   }
