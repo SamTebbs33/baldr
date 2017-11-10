@@ -51,7 +51,7 @@ object Baldr {
       case _ if progress.isEmpty => acc
       case _ => progress :: acc
     }
-    aux.apply(input.toSeq, false, "", List[String]()).toArray
+    aux(input.toSeq, false, "", List[String]()).reverse.toArray
   }
 
   def repl(args: Array[String]): Unit = {
