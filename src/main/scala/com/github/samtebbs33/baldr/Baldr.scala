@@ -110,9 +110,9 @@ object Baldr {
   def revert(hash: String): Unit = {
     val contentList = Save.getStateAtSave(hash)
     // Delete working directory and replace with versions from save
-    root.listFiles(baldrDirFilter).foreach(IO.delete)
-    // Write contentList to files
-    contentList.foreach {
+    tracking.list.foreach(IO.delete)
+    // Write contentList to tracked files
+    contentList.filter(p => tracking.list.contains(p._1)).foreach {
       case (file, lines) => if(lines.nonEmpty) IO.writeLines(file, lines.toList)
     }
   }
