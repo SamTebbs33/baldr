@@ -21,3 +21,5 @@ baldr.iml
 out/
 *.jar
 test.txt
+
+test_dir/
