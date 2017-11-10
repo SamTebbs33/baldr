@@ -58,6 +58,17 @@ object Baldr {
     aux.apply(input.toSeq, false, "", List[String]()).toArray
   }
 
+  def repl(args: Array[String]): Unit = {
+    while(StdIn.readLine() match {
+      case null => false
+      case input =>
+        val split = splitArgs(input)
+        Command.accept(split(0), split.slice(1, split.length))
+        writeChanges()
+        true
+    }){}
+  }
+
   def save(msg: String): Unit = {
     val files = staging.list
     val currentHead = Branch.head
