@@ -5,7 +5,7 @@ class Command(val minArgCount: Int, val handler: Array[String] => Unit)
 object Command {
   val void = (_: Array[String]) => ()
   val commandMap = Map(
-    "repl" -> new Command(0, a => Baldr.repl(a))
+    "repl" -> new Command(0, a => Baldr.repl(a)),
     "init" -> new Command(0, _ => ()),
     "save" -> new Command(1, a => Baldr.save(a(0))),
     "ls" -> new Command(0, void),
