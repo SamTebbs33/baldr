@@ -39,7 +39,7 @@ object Baldr {
   }
 
   def splitArgs(input: String): Array[String] = {
-    val aux: (Seq[Char], Boolean, String, List[String]) => List[String] = (input, inQuotes, progress, acc) => input match {
+    def aux(input: Seq[Char], inQuotes: Boolean, progress: String, acc: List[String]): List[String] = input match {
       case Seq(prefix, suffix@_*) => prefix match {
         case '\"' if inQuotes => aux(suffix, false, "", progress :: acc)
         case '\"' if progress.isEmpty => aux(suffix, true, "", acc)
