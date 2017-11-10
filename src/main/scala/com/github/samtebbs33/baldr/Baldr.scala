@@ -151,6 +151,7 @@ object Baldr {
     } else if(cmd.equals("init")) init()
     ignore.createFileAndLoad()
     staging.createFileAndLoad()
+    tracking.createFileAndLoad()
     Branch.loadBranches()
     Command.accept(args(0), args.slice(1, args.length))
     writeChanges()
