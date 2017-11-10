@@ -14,6 +14,10 @@ object Command {
     "rm" -> new Command(1, a => Baldr.unstage(a(0))),
     "ignore" -> new Command(1, a => Baldr.ignore.add(a(0))),
     "unignore" -> new Command(1, a => Baldr.ignore.remove(a(0))),
+    "reset" -> new Command(1, a => {
+      val hash = if(a.length > 1) a(1) else Branch.current.head
+      Baldr.resetFile(a(0), hash)
+    }),
     "switch" -> new Command(1, a => {
       val branchName = a(0)
       Branch.getBranch(branchName) match {
