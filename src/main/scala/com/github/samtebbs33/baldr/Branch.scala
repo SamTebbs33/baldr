@@ -12,7 +12,6 @@ import scala.collection.JavaConverters._
   * Created by samtebbs on 09/09/2016.
   */
 class Branch(val name: String, var head: String, var savesSinceCache: Int = 0, val propertiesFile: PropertiesFile) {
-  println(name)
 
   def write(): Unit = {
     propertiesFile.set("name", name)
