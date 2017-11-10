@@ -32,7 +32,7 @@ object Baldr {
       case true ⇒ println(".baldr dir already exists")
       case _ ⇒ {
         baldrDir.mkdir()
-        Branch.current = Branch.createBranch(masterBranchName)
+        Branch.setCurrentBranch(Branch.createBranch(masterBranchName))
         println("Initialised repository in " + baldrDir.getAbsolutePath)
       }
     }

@@ -50,7 +50,6 @@ object Branch {
   def createBranch(name: String, head: String = head): Branch = {
     val branch = new Branch(name, head, propertiesFile = new PropertiesFile(new File(branchesDir, name + ".txt")))
     Branch.branches += branch
-    setCurrentBranch(branch)
     branch
   }
 
