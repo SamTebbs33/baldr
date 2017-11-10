@@ -160,7 +160,6 @@ object Save {
     // Apply changes from each save
     saveStack.foreach(hash => {
       Save.applyChanges(hash, contentList)
-      println(s"content list after applying all changes: $contentList")
     })
     contentList
   }
@@ -205,7 +204,6 @@ object Save {
   def load(hash: String): Save = {
     val saveDir = new File(savesDir, hash)
     val saveFile = new File(saveDir, "meta.txt")
-    println(s"Save file ${saveFile.getAbsolutePath}")
     val properties = new PropertiesFile(saveFile)
     val save = new Save(hash, properties)
     save
