@@ -54,6 +54,11 @@ object Branch {
     metaFile.set("branch", current.name)
   }
 
+  def switchBranch(branch: Branch): Unit = {
+    setCurrentBranch(branch)
+    Baldr.revert(branch.head)
+  }
+
   def createBranch(name: String, head: String = head): Branch = {
     val branch = new Branch(name, head, propertiesFile = new PropertiesFile(new File(branchesDir, name + ".txt")))
     Branch.branches += branch
