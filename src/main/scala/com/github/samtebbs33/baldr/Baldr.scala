@@ -42,6 +42,22 @@ object Baldr {
     staging.remove(filePath)
   }
 
+  def splitArgs(input: String): Array[String] = {
+    val aux: (Seq[Char], Boolean, String, List[String]) => List[String] = (input, inQuotes, progress, acc) => input match {
+      case Seq(prefix, suffix@_*) => prefix match {
+        case '\"' if inQuotes => aux(suffix, false, "", progress :: acc)
+        case '\"' if progress.isEmpty => aux(suffix, true, "", acc)
+        case '\"' => aux(suffix, true, "", progress :: acc)
+        case ' ' if !inQuotes && progress.isEmpty => aux(suffix, false, "", acc)
+        case ' ' if !inQuotes => aux(suffix, false, "", progress :: acc)
+        case ch => aux(suffix, inQuotes, progress + ch, acc)
+      }
+      case _ if progress.isEmpty => acc
+      case _ => progress :: acc
+    }
+    aux.apply(input.toSeq, false, "", List[String]()).toArray
+  }
+
   def save(msg: String): Unit = {
     val files = staging.list
     val currentHead = Branch.head
