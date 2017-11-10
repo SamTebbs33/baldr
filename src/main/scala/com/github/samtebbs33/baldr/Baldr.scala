@@ -125,19 +125,8 @@ object Baldr {
     ignore.createFileAndLoad()
     staging.createFileAndLoad()
     Branch.loadBranches()
-    cmd match {
-      case "init" ⇒
-      case "save" ⇒ save(args(1))
-      case "revert" ⇒ revert(args(1))
-      case "list" ⇒ listSaves()
-      case "stage" => stage(args(1))
-      case "unstage" => staging.remove(args(1))
-      case "ignore" => ignore.add(args(1))
-      case "ack" => ignore.remove(args(1))
-    }
-    ignore.writeChanges()
-    staging.writeChanges()
-    Branch.writeChanges()
+    Command.accept(args(0), args.slice(1, args.length))
+    writeChanges()
   }
 
 }
