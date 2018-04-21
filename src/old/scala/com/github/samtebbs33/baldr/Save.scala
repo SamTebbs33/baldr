@@ -1,12 +1,10 @@
 package com.github.samtebbs33.baldr
 
-import java.io.{File, FileOutputStream}
+import java.io.File
 import java.util.Date
-import java.util.zip.ZipOutputStream
 
-import scala.collection.{immutable, mutable}
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.Random
 
 /**

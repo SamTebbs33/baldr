@@ -6,7 +6,6 @@ import java.nio.file.Files
 import com.github.samtebbs33.baldr.Save.ContentMap
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable
 
 /**
   * Created by samtebbs on 10/09/2016.

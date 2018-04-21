@@ -1,12 +1,8 @@
 package com.github.samtebbs33.baldr
 
 import java.io.File
-import java.nio.file.Files
-import java.util.Properties
 
 import scala.collection.mutable
-import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 
 /**
   * Created by samtebbs on 09/09/2016.

@@ -2,8 +2,8 @@ package com.github.samtebbs33.baldr
 
 import java.io.File
 
-import scala.collection.mutable
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 /**
   * Created by samtebbs on 10/09/2016.

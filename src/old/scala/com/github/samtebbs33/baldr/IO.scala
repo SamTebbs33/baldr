@@ -3,8 +3,8 @@ package com.github.samtebbs33.baldr
 import java.io.{File, FileInputStream, FileOutputStream, PrintWriter}
 import java.nio.file.{Files, StandardOpenOption}
 import java.util.zip.{ZipEntry, ZipInputStream, ZipOutputStream}
+
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 
 /**
   * Created by samtebbs on 09/09/2016.
